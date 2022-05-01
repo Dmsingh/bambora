@@ -1,24 +1,42 @@
 import logo from './logo.svg';
+import {useState,useEffect} from 'react'
 import './App.css';
+import Checkout from '../src/components/checkout'; 
+import Card from './components/payment/card';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
+localStorage.setItem('mode','checkout')
+const initmode=localStorage.getItem('mode')
 
 function App() {
+const[mode,setmode]=useState(initmode)
+useEffect(() => {
+  
+// return setmode(localStorage.setItem('mode'))
+  
+}, [])
+
+
   return (
+     <BrowserRouter>
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+
+    <Routes>
+      
+      <Route path="/" element={<Checkout />} />
+      <Route path="payment" element={<Card />} />
+    </Routes>
     </div>
+
+  </BrowserRouter>
+ 
+
+
+    
+    
   );
 }
 
