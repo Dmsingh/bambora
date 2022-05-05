@@ -1,4 +1,5 @@
-import React,{useState} from 'react'
+/* eslint-disable no-unused-expressions */
+import React,{useState,useEffect} from 'react'
 import './style.css'
 import axios from 'axios'
 const initialstate ={
@@ -15,6 +16,13 @@ const initialstate ={
 }
 function Card() {
     const [cardPayment,setCardPayment]=useState(initialstate)
+    const [profileToken,setProfileToken]=useState("")
+    useEffect(() => {
+   const cleaner=()=>{
+
+   }
+   return cleaner()
+    }, [profileToken])
     
     const changeHandler=(e)=>{
         const name=e.target.name
@@ -62,23 +70,62 @@ function Card() {
         .catch((error)=>{console.log(error)})
     }
     const createProfile=async()=>{
+      alert("Generating Token,please wait...")
+
      const {card}=cardPayment
-     console.log(card)
-        
+     await  axios.post('http://localhost:8001/token',card )
+      .then(async(response)=>{
         const config = {
-            headers:{
-                'Content-Type': 'application/json',
+          headers:{
+              'Content-Type': 'application/json',
+              'Authorization': `${process.env.REACT_APP_PROFILE_TOKEN}`
+          }
+        };
+       const {name}=card
+       const code=response?.data?.token
+        const profile={
+          "token":{  
+            "name":name,
+            "code":code
+          }
+      }
+      console.log(profile)
+       await axios.post('https://api.na.bambora.com/v1/profiles',profile,config )
+            .then(res=>{
+              res?.data?.customer_code && setProfileToken(res?.data?.customer_code)
+              console.log(res.data,"line123")
             
-            }
-          };
-        
-      await  axios.post('https://api.na.bambora.com/scripts/tokenization/tokens',card,config )
-      .then((response)=>{
-        console.log(response)
+            })
+            .catch(err=>console.log(err))
+
     }).catch((error)=>{
         alert("It is blocked by CORS Policy. You can use postman collection for this call.You will get this link on console")
-        console.log("https://www.postman.com/speeding-astronaut-88068/workspace/bombara-payment-gateway/collection/10975083-7b756556-872b-4214-bd25-1af221cbbf81?action=share&creator=10975083")
+        console.log(error)
     })
+    
+    }
+    const makePayment=async()=>{
+      alert("Transaction is being processing please wait...")
+      const payment={
+        "amount":99.00,
+        "payment_method":"payment_profile",
+        "payment_profile":{
+        "customer_code":profileToken,
+        "card_id":1       
+        }
+        
+   }
+   const config = {
+    headers:{
+        'Content-Type': 'application/json',
+        'Authorization': `${process.env.REACT_APP_PAYMENT_TOKEN}`
+    }
+  };
+      await axios.post('https://api.na.bambora.com/v1/payments',payment,config)
+            .then(res=>res.data.message==="Approved"?(alert("Transaction is sucessfully")):console.log("something went wrong"),setProfileToken(""))
+            .catch(err=>{alert("transaction is declined!!!");console.log(err);setProfileToken("");window.location.reload()})
+
+    
     
     }
 
@@ -103,7 +150,9 @@ function Card() {
     </div>
   </div>
   <div className="card-body">
-    <form>
+    {
+      profileToken===""?
+      <form>
       <div className="one">
         <label htmlFor>Name on card</label>
         <input placeholder="Johny Relative" type="text" name="name" value={cardPayment.card.name} onChange={(e)=>{changeHandler(e)}}/>
@@ -144,14 +193,34 @@ function Card() {
         <input name="cvd" value={cardPayment.card.cvd} onChange={(e)=>{changeHandler(e)}} maxLength={4} placeholder={633} type="number" />
       </div>
     </form>
+    :
+    <form>
+      <div className="one">
+        <label htmlFor>Profile Token</label>
+        <input placeholder="" type="text" name="name" value={profileToken} disabled/>
+      </div>
+      
+    
+    </form>
+    }
+   
   </div>
   
-  <button className="Buttons" onClick={handelSubmit}>
-      Proceed to pay
-  </button>
-  <button className="Buttons2" onClick={createProfile}>
-      Create Payment Profile
-  </button>
+  {
+    profileToken===""?
+    <>
+    <button className="Buttons" onClick={handelSubmit}>
+    Proceed to pay
+</button>
+<button className="Buttons2" onClick={createProfile}>
+    Create Payment Profile
+</button>
+</>:
+<button className="Buttons2" style={{position:"relative", top:65}} onClick={makePayment}>
+    Make Payment
+</button>
+  }
+ 
 
  
 </div>
