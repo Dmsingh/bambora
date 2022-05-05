@@ -73,7 +73,7 @@ function Card() {
       alert("Generating Token,please wait...")
 
      const {card}=cardPayment
-     await  axios.post('http://localhost:8001/token',card )
+     await  axios.post('https://bombaraapi.herokuapp.com/token',card )
       .then(async(response)=>{
         const config = {
           headers:{
